@@ -70,7 +70,7 @@ def simulate((N,nsamples,datahist,nbins,size_bin,mean,std)):
   return [N,teste.mean(),teste.std(),teste_gauss.mean(),teste_gauss.std()]
 
 #creating the entry parameters
-N_list=[x for x in range(10,50000,2000)]
+N_list=[x for x in range(10,10000,1000)]
 parameters=list()
 for n in N_list:
   parameters.append((n,nsamples,datahist,nbins,size_bin,mean,std))

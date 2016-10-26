@@ -11,7 +11,13 @@ import numpy as np
 if len(sys.argv)!=(5+1):
   print """
   Usage:
-    python def_parameters.py WORKTYPE mean(ms) length(min) nprocs output
+    python def_parameters.py WORKTYPE mean(ms) length(min) nprocs output.dat
+    
+    WORKTYPE: 1 | 2 | 3
+    mean: the program will find the parameters to make each run consume mean milisseconds aprox.
+    lenght: total time of the runs
+    nprocs: number of cores to use, usually is the real cores number
+    output.dat: data time series to use with process.py
   """
   print len(sys.argv)
   sys.exit(0)
@@ -61,7 +67,11 @@ print "ITERATIONS for "+length+" minutes: "+str(int((int(length)*60.0/res)))
 print "EL. TIME PER ITERATION: "+str(res)
 print "NUMBER OF DATA: "+str(int(nprocs)*int((int(length)*60.0/res)))
 print "##########################################"
-print "Run the command:"
-print 'export OMP_NUM_THREADS=1 && export OPENBLAS_NUM_THREADS=1 && '+"mpic++ run.cpp -larmadillo -DITERATIONS="+str(int((int(length)*60.0/res)))+" -DOPS_PER_ITERATION="+str(ops)+" -D WORKTYPE="+str(workt)+" -o outfile"
-print "mpirun -np "+str(nprocs)+" outfile"
-
+print
+#print "Run the command:"
+#print 'export OMP_NUM_THREADS=1 && export OPENBLAS_NUM_THREADS=1 && '+"mpic++ run.cpp -larmadillo -DITERATIONS="+str(int((int(length)*60.0/res)))+" -DOPS_PER_ITERATION="+str(ops)+" -D WORKTYPE="+str(workt)+" -o outfile"
+#print "mpirun -np "+str(nprocs)+" outfile"
+cmd='export OMP_NUM_THREADS=1 && export OPENBLAS_NUM_THREADS=1 && '+"mpic++ run.cpp -larmadillo -DITERATIONS="+str(int((int(length)*60.0/res)))+" -DOPS_PER_ITERATION="+str(ops)+" -D WORKTYPE="+str(workt)+" -o outfile && mpirun -np "+str(nprocs)+" outfile > "+output
+print "Running the command: "+cmd
+print
+os.system(cmd)
