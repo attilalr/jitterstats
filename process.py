@@ -28,6 +28,10 @@ while(line):
     data_array.append(float(line.split()[0]))
   line=file.readline()
 
+if (len(data_array)==0):
+  print " Datafile empty, exiting..."
+  sys.exit(0)
+
 np_data=np.array(data_array)
 
 results=list()
