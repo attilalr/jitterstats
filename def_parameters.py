@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, time
 import numpy as np
 
 # parametros de entrada: WORKTYPE mean length nprocs output
@@ -11,15 +11,21 @@ import numpy as np
 if len(sys.argv)!=(5+1):
   print """
   Usage:
-    python def_parameters.py WORKTYPE mean(ms) length(min) nprocs output
+    python def_parameters.py WORKTYPE mean(ms) length(min) nprocs output.dat
+    
+    WORKTYPE: 1 | 2 | 3
+    mean: the program will find the parameters to make each run consume mean milisseconds aprox.
+    lenght: total time of the runs
+    nprocs: number of cores to use, usually is the real cores number
+    output.dat: data time series to use with process.py
   """
   print len(sys.argv)
   sys.exit(0)
 
-ops=4000000
-it=300
+ops=1000000
+it=500
 source='run.cpp'
-laco=3
+laco=4
 
 workt=sys.argv[1]
 mean=sys.argv[2]
@@ -57,11 +63,24 @@ for i in range(laco):
 print "##########################################"
 print "FINAL OPS AND IT PARAMETERS:"
 print "OPS_PER_ITERATION: "+str(ops)
-print "ITERATIONS for "+length+" minutes: "+str(int((int(length)*60.0/res)))
+print "ITERATIONS for "+length+" minutes (per core): "+str(int(((int(length)*60.0)/(res*int(1)))))
 print "EL. TIME PER ITERATION: "+str(res)
 print "NUMBER OF DATA: "+str(int(nprocs)*int((int(length)*60.0/res)))
 print "##########################################"
-print "Run the command:"
-print 'export OMP_NUM_THREADS=1 && export OPENBLAS_NUM_THREADS=1 && '+"mpic++ run.cpp -larmadillo -DITERATIONS="+str(int((int(length)*60.0/res)))+" -DOPS_PER_ITERATION="+str(ops)+" -D WORKTYPE="+str(workt)+" -o outfile"
-print "mpirun -np "+str(nprocs)+" outfile"
+print
+cmd='export OMP_NUM_THREADS=1 && export OPENBLAS_NUM_THREADS=1 && '+"mpic++ run.cpp -larmadillo -DITERATIONS="+str(int(((int(length)*60.0)/(res*int(1)))))+" -DOPS_PER_ITERATION="+str(ops)+" -D WORKTYPE="+str(workt)+" -o outfile && mpirun -np "+str(nprocs)+" outfile "
+print "Running the command: "+cmd
+print
+data_ts=os.popen(cmd).read()
+t=time.time()
+print " Finished in "+str(float(time.time()-t)/60.0)+" minutes"
+print " Writing data to file "+output
+print
+
+try:
+  file=open(output,'w')
+  file.write(data_ts)
+  file.close()
+except:
+  print " Error writing data." 
 

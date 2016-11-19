@@ -8,7 +8,7 @@ from multiprocessing import Pool
 if len(sys.argv)!=2:
   print """
   Usage:
-    python process.py datafile
+    python process.py datafile > results.dat
   """
   sys.exit(0)
 
@@ -28,6 +28,10 @@ while(line):
     data_array.append(float(line.split()[0]))
   line=file.readline()
 
+if (len(data_array)==0):
+  print " Datafile empty, exiting..."
+  sys.exit(0)
+
 np_data=np.array(data_array)
 
 results=list()
@@ -45,34 +49,42 @@ size_bin=bins[1]-bins[0] # considerring all the bins with same width
 for i in range(1,len(bins)):
   nbins.append((bins[i]+bins[i-1])/2)
 
-nsamples=200000
-#for N in range(10,100,10):
-  #I can change with the next line but I got no performance improvements
-  #teste=map(lambda x:np.random.choice(nbins,size=N,p=np.array(datahist)*size_bin).max(),[0]*nsamples)
-#  teste=list()
-#  teste_gauss=list()
-#  for i in range(nsamples):
-#    teste.append(np.random.choice(nbins,size=N,p=np.array(datahist)*size_bin).max())
-#    teste_gauss.append((results[0][2]*np.random.randn(N)+results[0][1]).max())
-#  teste=np.array(teste)
-#  teste_gauss=np.array(teste_gauss)
-#  results.append([N,teste.mean(),teste.std(),teste_gauss.mean(),teste_gauss.std()])
+am_work=20000000
+#nsamples=200000
 
 def simulate((N,nsamples,datahist,nbins,size_bin,mean,std)):
   teste=list()
   teste_gauss=list()
+  sum_tmax=0
+  idleness=0
+  comp_time=0
+  
   for i in range(nsamples):
-    teste.append(np.random.choice(nbins,size=N,p=np.array(datahist)*size_bin).max())
+    sample_list=np.random.choice(nbins,size=N,p=np.array(datahist)*size_bin)
+    tmax=sample_list.max()
+    sum_tmax=sum_tmax+tmax # sum tmax, effective computing time
+    idleness=idleness+(N*tmax-sample_list.sum())/(N*tmax)
+    comp_time=comp_time+sample_list.sum()/(N*tmax)
+    
+    teste.append(tmax)
     teste_gauss.append((std*np.random.randn(N)+mean).max())
+    
+
+  sum_tmax=sum_tmax    
+  mean_idleness=idleness/nsamples
+  mean_eff_comp=comp_time/nsamples
+  
   teste=np.array(teste)
   teste_gauss=np.array(teste_gauss)
 
-  return [N,teste.mean(),teste.std(),teste_gauss.mean(),teste_gauss.std()]
+  return [N,teste.mean(),teste.std(),teste_gauss.mean(),teste_gauss.std(),sum_tmax,mean_idleness,mean_eff_comp]
 
 #creating the entry parameters
-N_list=[x for x in range(10,50000,2000)]
+#N_list=[x for x in range(10,100,10)]+[x for x in range(100,1000,100)]+[x for x in range(1000,10000,1000)]
+N_list=[x for x in range(1000,100000,1000)]
 parameters=list()
 for n in N_list:
+  nsamples=int(am_work/n)
   parameters.append((n,nsamples,datahist,nbins,size_bin,mean,std))
 pool=Pool(processes=len(N_list))
 results=pool.map(simulate,parameters)
@@ -85,9 +97,12 @@ results=pool.map(simulate,parameters)
 #  p.plot(bins_tmp[:-1,],datahist_tmp,color+'o--')
 #p.show()
 
+t0=results[0][5]
+n0=results[0][0]
+
 print "# "+str(mean)+" "+str(std)
-print "# N slowdown sigma slowdon_gaussian sigma-slowdown_gaussian"
+print "# N | slowdown | sigma | slowdon_gaussian | sigma-slowdown_gaussian | t_eff_finish | ideal_t_eff_finish "
 for res in results:
-  print res[0], ((res[1]-mean)/mean)*100, ((res[1]+res[2]-mean)/mean)*100-((res[1]-mean)/mean)*100, ((res[3]-mean)/mean)*100, ((res[3]+res[4]-mean)/mean)*100-((res[3]-mean)/mean)*100
+  print res[0], ((res[1]-mean)/mean)*100, ((res[1]+res[2]-mean)/mean)*100-((res[1]-mean)/mean)*100, ((res[3]-mean)/mean)*100, ((res[3]+res[4]-mean)/mean)*100-((res[3]-mean)/mean)*100,res[5], (t0*n0)/res[0], res[6], res[7]
 
 file.close()

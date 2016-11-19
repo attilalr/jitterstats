@@ -53,7 +53,7 @@ int main ( int argc, char *argv[] ) {
   // size (kB)= VSIZE * 8 / 1024 
   
   if (WORKTYPE==1) {
-      int VSIZE=98304;
+      int VSIZE=6144;
       int a[VSIZE];
       for (i=0;i<VSIZE;i++)
         a[i]=i;
