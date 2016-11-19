@@ -1,5 +1,5 @@
 import numpy as np
-import random
+import random, math
 import sys
 from multiprocessing import Pool
 
@@ -62,7 +62,9 @@ def simulate((calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
   teste=list()
   sum_tmax=0
   idleness=0
+  idleness2=0
   comp_time=0
+  comp_time2=0
   
   for i in range(nsamples):
     if calc_gauss==0: # use profile distribution
@@ -74,16 +76,21 @@ def simulate((calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
  
     sum_tmax=sum_tmax+tmax # sum tmax, effective computing time
     idleness=idleness+(N*tmax-sample_list.sum())/(N*tmax)
+    idleness2=idleness2+(N*tmax-sample_list.sum())/(N*tmax)*(N*tmax-sample_list.sum())/(N*tmax)
     comp_time=comp_time+sample_list.sum()/(N*tmax)
+    comp_time2=comp_time2+sample_list.sum()/(N*tmax)*sample_list.sum()/(N*tmax)
     
     teste.append(tmax)
     
   mean_idleness=idleness/nsamples
   mean_eff_comp=comp_time/nsamples
   
+  s_idleness=math.sqrt(idleness2/nsamples-mean_idleness*mean_idleness)
+  s_eff_comp=math.sqrt(comp_time2/nsamples-mean_eff_comp*mean_eff_comp)
+  
   teste=np.array(teste)
 
-  return [N,teste.mean(),teste.std(),sum_tmax,mean_idleness,mean_eff_comp]
+  return [N,teste.mean(),teste.std(),sum_tmax,nsamples*teste.std(),mean_idleness,s_idleness,mean_eff_comp,s_eff_comp]
 
 #creating the entry parameters
 #N_list=[x for x in range(10,100,10)]+[x for x in range(100,1000,100)]+[x for x in range(1000,10000,1000)]
@@ -99,13 +106,9 @@ t0=results[0][3]
 n0=results[0][0]
 
 print "# "+str(mean)+" "+str(std)
-print "# N | slowdown | sigma | t_eff_finish | ideal_t_eff_finish | t_eff_diff_from_ideal | deviation % from ideal increase in computation | mean idleness | mean effective computing"
-
-t_old=0
+print "# N | slowdown | sigma | t_eff_finish | s_t_eff_finish | ideal_t_eff_finish | t_eff_diff_from_ideal | mean idleness | s_mean_idl | mean effective computing | s_mean_eff_comp"
 
 for res in results:
-  print res[0], ((res[1]-mean)/mean)*100, ((res[1]+res[2]-mean)/mean)*100-((res[1]-mean)/mean)*100,res[3]/t0, (t0*n0)/(res[0]*t0),res[4], res[5]
-
-  t_old=res[3]
+  print res[0], ((res[1]-mean)/mean)*100, ((res[1]+res[2]-mean)/mean)*100-((res[1]-mean)/mean)*100,res[3]/t0, res[4]/t0, (t0*n0)/(res[0]*t0),res[5], res[6], res[7], res[8]
 
 
