@@ -3,8 +3,10 @@
 # include <iomanip>
 # include <ctime>
 
-#include<armadillo>
+#ifdef ARMADILLO
+# include <armadillo>
 using namespace arma;
+#endif
 
 using namespace std;
 
@@ -89,6 +91,7 @@ int main ( int argc, char *argv[] ) {
       }
   }
 
+#ifdef ARMADILLO
   if (WORKTYPE==3) {
       int size=100;
       /* work type 3*/  
@@ -108,6 +111,7 @@ int main ( int argc, char *argv[] ) {
         std::cout << (double)duration << std::endl;
       }
   }
+#endif
 
   MPI::Finalize();
 
