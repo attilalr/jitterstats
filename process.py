@@ -4,16 +4,25 @@ import sys
 import matplotlib.pyplot as p
 from multiprocessing import Pool
 
+calculate_gaussian=0
 
-if len(sys.argv)!=2:
+print sys.argv
+
+if (len(sys.argv)!=2 and len(sys.argv)!=3):
   print """
   Usage:
-    python process.py datafile > results.dat
+    python process.py datafile [--gauss=1] > results.dat
   """
   sys.exit(0)
 
-datafile=sys.argv[1]
+if (len(sys.argv)==3 and sys.argv[2]=='--gauss=1'):
+  calculate_gaussian=1 
+  
+if (len(sys.argv)==3 and sys.argv[2]!='--gauss=1'):
+  print " Unrecognized option "+sys.argv[2]
+  sys.exit(0)
 
+datafile=sys.argv[1]
 data_array=list()
 
 try:
@@ -52,7 +61,7 @@ for i in range(1,len(bins)):
 am_work=20000000
 #nsamples=200000
 
-def simulate((N,nsamples,datahist,nbins,size_bin,mean,std)):
+def simulate((calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
   teste=list()
   teste_gauss=list()
   sum_tmax=0
@@ -67,7 +76,8 @@ def simulate((N,nsamples,datahist,nbins,size_bin,mean,std)):
     comp_time=comp_time+sample_list.sum()/(N*tmax)
     
     teste.append(tmax)
-    teste_gauss.append((std*np.random.randn(N)+mean).max())
+    if calc_gauss==1:
+      teste_gauss.append((std*np.random.randn(N)+mean).max())
     
 
   sum_tmax=sum_tmax    
@@ -75,9 +85,15 @@ def simulate((N,nsamples,datahist,nbins,size_bin,mean,std)):
   mean_eff_comp=comp_time/nsamples
   
   teste=np.array(teste)
-  teste_gauss=np.array(teste_gauss)
+  if calc_gauss==1:
+    teste_gauss=np.array(teste_gauss)
 
-  return [N,teste.mean(),teste.std(),teste_gauss.mean(),teste_gauss.std(),sum_tmax,mean_idleness,mean_eff_comp]
+  if calc_gauss==1:
+    return [N,teste.mean(),teste.std(),teste_gauss.mean(),teste_gauss.std(),sum_tmax,mean_idleness,mean_eff_comp]
+
+  if calc_gauss==0:
+    return [N,teste.mean(),teste.std(),0,0,sum_tmax,mean_idleness,mean_eff_comp]
+
 
 #creating the entry parameters
 #N_list=[x for x in range(10,100,10)]+[x for x in range(100,1000,100)]+[x for x in range(1000,10000,1000)]
@@ -85,7 +101,7 @@ N_list=[x for x in range(1000,100000,1000)]
 parameters=list()
 for n in N_list:
   nsamples=int(am_work/n)
-  parameters.append((n,nsamples,datahist,nbins,size_bin,mean,std))
+  parameters.append((calculate_gaussian,n,nsamples,datahist,nbins,size_bin,mean,std))
 pool=Pool(processes=len(N_list))
 results=pool.map(simulate,parameters)
 
