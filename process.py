@@ -90,7 +90,7 @@ def simulate((calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
 N_list=[x for x in range(1000,100000,1000)]
 parameters=list()
 for n in N_list:
-  nsamples=int(am_work/n)
+  nsamples=int(am_work/n) # ideal parallelization
   parameters.append((calculate_gaussian,n,nsamples,datahist,nbins,size_bin,mean,std))
 pool=Pool(processes=len(N_list))
 results=pool.map(simulate,parameters)
@@ -99,8 +99,13 @@ t0=results[0][3]
 n0=results[0][0]
 
 print "# "+str(mean)+" "+str(std)
-print "# N | slowdown | sigma | t_eff_finish | ideal_t_eff_finish | mean idleness | mean effective computing"
-for res in results:
-  print res[0], ((res[1]-mean)/mean)*100, ((res[1]+res[2]-mean)/mean)*100-((res[1]-mean)/mean)*100,res[3]/t0, (t0*n0)/(res[0]*t0), res[4], res[5]
+print "# N | slowdown | sigma | t_eff_finish | ideal_t_eff_finish | t_eff_diff_from_ideal | deviation % from ideal increase in computation | mean idleness | mean effective computing"
 
-file.close()
+t_old=0
+
+for res in results:
+  print res[0], ((res[1]-mean)/mean)*100, ((res[1]+res[2]-mean)/mean)*100-((res[1]-mean)/mean)*100,res[3]/t0, (t0*n0)/(res[0]*t0),res[4], res[5]
+
+  t_old=res[3]
+
+
