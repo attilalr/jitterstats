@@ -22,8 +22,8 @@ if len(sys.argv)!=(5+1):
   print len(sys.argv)
   sys.exit(0)
 
-ops=1000000
-it=500
+ops=4000000
+it=200
 source='run.cpp'
 laco=4
 
