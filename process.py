@@ -1,6 +1,6 @@
 import numpy as np
 import random, math
-import sys
+import sys, time
 from multiprocessing import Pool
 
 calculate_gaussian=0
@@ -55,18 +55,20 @@ size_bin=bins[1]-bins[0] # considerring all the bins with same width
 for i in range(1,len(bins)):
   nbins.append((bins[i]+bins[i-1])/2)
 
-am_work=20000000
-#nsamples=200000
+am_work=100000000
+nsamples=1000000
 
-def simulate((calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
+def simulate((am_work,calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
   teste=list()
   sum_tmax=0
   idleness=0
   idleness2=0
   comp_time=0
   comp_time2=0
+
+  f=(1.0*am_work)/N/nsamples # corr factor , (Am_work/N) / nsamples , theoretical iterations / effective iterations
   
-  for i in range(nsamples):
+  for i in xrange(nsamples):
     if calc_gauss==0: # use profile distribution
       sample_list=np.random.choice(nbins,size=N,p=np.array(datahist)*size_bin)
     if calc_gauss==1: # use normal distribution with mean and std based on profile
@@ -90,17 +92,53 @@ def simulate((calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
   
   teste=np.array(teste)
 
-  return [N,teste.mean(),teste.std(),sum_tmax,nsamples*teste.std(),mean_idleness,s_idleness,mean_eff_comp,s_eff_comp]
+#  return [N,teste.mean(),teste.std(),sum_tmax/f,nsamples*teste.std(),mean_idleness,s_idleness,mean_eff_comp,s_eff_comp]
+  return [N,teste.mean(),teste.std(),sum_tmax*f,(float(N)/am_work)*teste.std(),mean_idleness,(float(N)/am_work)*s_idleness,mean_eff_comp,(float(N)/am_work)*s_eff_comp]
+
+# simulate_light calculate just the elapsed time
+def simulate_light((am_work,calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
+  sum_tmax=0
+  f=(1.0*am_work)/N/nsamples # (Am_work/N) / nsamples , theoretical iterations / effective iterations
+  
+  for i in xrange(nsamples):
+    if calc_gauss==0: # use profile distribution
+      sample_list=np.random.choice(nbins,size=N,p=np.array(datahist)*size_bin)
+    if calc_gauss==1: # use normal distribution with mean and std based on profile
+      sample_list=std*np.random.randn(N)+mean
+
+    tmax=sample_list.max()
+ 
+    sum_tmax=sum_tmax+tmax # sum tmax, effective computing time
+
+  return [N,0,0,sum_tmax*f,0,0,0,0,0]
+
 
 #creating the entry parameters
 #N_list=[x for x in range(10,100,10)]+[x for x in range(100,1000,100)]+[x for x in range(1000,10000,1000)]
-N_list=[x for x in range(1000,100000,1000)]
+N_list=[x for x in range(10,400,20)]+[x for x in range(400,20000,100)]
+
+# acessory list with N+1
+#N_list_next=(np.array(N_list)+1).tolist()
+
+#
+t=time.time()
 parameters=list()
 for n in N_list:
-  nsamples=int(am_work/n) # ideal parallelization
-  parameters.append((calculate_gaussian,n,nsamples,datahist,nbins,size_bin,mean,std))
+#  nsamples=int(am_work/n) # ideal parallelization
+  parameters.append((am_work,calculate_gaussian,n,nsamples,datahist,nbins,size_bin,mean,std))
 pool=Pool(processes=len(N_list))
 results=pool.map(simulate,parameters)
+print "#"+str(time.time()-t)+" seconds to run the main data."
+
+# list with N's +1
+#t=time.time()
+#parameters=list()
+#for n in N_list_next:
+#  nsamples=int(am_work/n) # ideal parallelization, look here for dispersion because of int()
+#  parameters.append((am_work,calculate_gaussian,n,nsamples,datahist,nbins,size_bin,mean,std))
+#pool=Pool(processes=len(N_list_next))
+#results_n=pool.map(simulate_light,parameters)
+#print "#"+str(time.time()-t)+" seconds to run the aux data."
 
 t0=results[0][3]
 n0=results[0][0]
@@ -108,7 +146,6 @@ n0=results[0][0]
 print "# "+str(mean)+" "+str(std)
 print "# N | slowdown | sigma | t_eff_finish | s_t_eff_finish | ideal_t_eff_finish | t_eff_diff_from_ideal | mean idleness | s_mean_idl | mean effective computing | s_mean_eff_comp"
 
-for res in results:
+for res,res_n in zip(results,results_n):
   print res[0], ((res[1]-mean)/mean)*100, ((res[1]+res[2]-mean)/mean)*100-((res[1]-mean)/mean)*100,res[3]/t0, res[4]/t0, (t0*n0)/(res[0]*t0),res[5], res[6], res[7], res[8]
-
-
+  
