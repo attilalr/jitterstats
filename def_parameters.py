@@ -22,10 +22,10 @@ if len(sys.argv)!=(5+1):
   print len(sys.argv)
   sys.exit(0)
 
-ops=4000000
-it=80
+ops=10000
+it=5000
 source='run.cpp'
-laco=4
+laco=20
 
 workt=sys.argv[1]
 mean=sys.argv[2]
@@ -47,8 +47,15 @@ def test(source,workt,nprocs,ops,it,name):
 
 for i in range(laco):
   res=test(source,workt,nprocs,ops,it,'teste-run')
-  ops=int(float(ops)*(0.001*float(mean))/res) # 0.001 is for msec. to sec.
   print "EL. TIME PER ITERATION: "+str(res)+" s. DESIRED TIME: "+str(float(mean)*0.001)+" s."
+  ops=int(float(ops)*0.001*float(mean)/res) # 0.001 is for msec. to sec.
+  print 'abs('+str(res)+' - '+' '+str(0.001*float(mean))+')'
+  print "dif: "+str(abs(res-(0.001*float(mean))))
+  if (abs(res-(0.001*float(mean)))<0.0002):
+    break
+  if (i==range(laco)[-1]):
+    print " Could not set OPS parameters correctly. Change ops in this source code."
+    sys.exit(0) 
 
 print "##########################################"
 print "FINAL OPS AND IT PARAMETERS:"
@@ -66,6 +73,9 @@ t=time.time()
 print " Finished in "+str(float(time.time()-t)/60.0)+" minutes"
 print " Writing data to file "+output
 print
+
+for i in data_ts.split():
+  print str(i)
 
 try:
   file=open(output,'w')

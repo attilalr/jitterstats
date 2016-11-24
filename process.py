@@ -96,21 +96,21 @@ def simulate((am_work,calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
   return [N,teste.mean(),teste.std(),sum_tmax*f,(float(N)/am_work)*teste.std(),mean_idleness,(float(N)/am_work)*s_idleness,mean_eff_comp,(float(N)/am_work)*s_eff_comp]
 
 # simulate_light calculate just the elapsed time
-def simulate_light((am_work,calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
-  sum_tmax=0
-  f=(1.0*am_work)/N/nsamples # (Am_work/N) / nsamples , theoretical iterations / effective iterations
+#def simulate_light((am_work,calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
+#  sum_tmax=0
+#  f=(1.0*am_work)/N/nsamples # (Am_work/N) / nsamples , theoretical iterations / effective iterations
   
-  for i in xrange(nsamples):
-    if calc_gauss==0: # use profile distribution
-      sample_list=np.random.choice(nbins,size=N,p=np.array(datahist)*size_bin)
-    if calc_gauss==1: # use normal distribution with mean and std based on profile
-      sample_list=std*np.random.randn(N)+mean
+#  for i in xrange(nsamples):
+#    if calc_gauss==0: # use profile distribution
+#      sample_list=np.random.choice(nbins,size=N,p=np.array(datahist)*size_bin)
+#    if calc_gauss==1: # use normal distribution with mean and std based on profile
+#      sample_list=std*np.random.randn(N)+mean
 
-    tmax=sample_list.max()
+#    tmax=sample_list.max()
  
-    sum_tmax=sum_tmax+tmax # sum tmax, effective computing time
+#    sum_tmax=sum_tmax+tmax # sum tmax, effective computing time
 
-  return [N,0,0,sum_tmax*f,0,0,0,0,0]
+#  return [N,0,0,sum_tmax*f,0,0,0,0,0]
 
 
 #creating the entry parameters

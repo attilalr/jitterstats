@@ -62,13 +62,15 @@ int main ( int argc, char *argv[] ) {
 
       /* work type 1*/  
       for (j=0;j<ITERATIONS;j++) {
-        MPI::COMM_WORLD.Barrier();
         start = std::clock();
+//        MPI::COMM_WORLD.Barrier();
         for (i=0;i<OPS_PER_ITERATION;i++) {
           s = s+(a[i%VSIZE])^s;
         }
+        MPI::COMM_WORLD.Barrier();
         duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        std::cout << (double)duration << std::endl;
+        if (id==0 && j!=0)
+          std::cout << (double)duration << std::endl;
       }
   }
 
