@@ -63,7 +63,6 @@ int main ( int argc, char *argv[] ) {
       /* work type 1*/  
       for (j=0;j<ITERATIONS;j++) {
         start = std::clock();
-//        MPI::COMM_WORLD.Barrier();
         for (i=0;i<OPS_PER_ITERATION;i++) {
           s = s+(a[i%VSIZE])^s;
         }
@@ -78,7 +77,6 @@ int main ( int argc, char *argv[] ) {
       srand(time(0)+(int)p*(int)id);
       /* work type 1, static monte carlo*/  
       for (j=0;j<ITERATIONS;j++) {
-        MPI::COMM_WORLD.Barrier();
         start = std::clock();
         s=0;
         for (i=0;i<OPS_PER_ITERATION;i++); {
@@ -88,8 +86,10 @@ int main ( int argc, char *argv[] ) {
             s++;
         }
         res=1.0*s/OPS_PER_ITERATION;
+        MPI::COMM_WORLD.Barrier();
         duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        std::cout << (double)duration << std::endl;
+        if (id==0 && j!=0)
+          std::cout << (double)duration << std::endl;
       }
   }
 
@@ -98,8 +98,6 @@ int main ( int argc, char *argv[] ) {
       int size=100;
       /* work type 3*/  
       for (j=0;j<ITERATIONS;j++) {
-        MPI::COMM_WORLD.Barrier();
-
         start = std::clock();
         for (i=0;i<OPS_PER_ITERATION;i++); {
           mat A = randu(size,size);
@@ -108,9 +106,10 @@ int main ( int argc, char *argv[] ) {
 
           Z=A*B;
         }
-
+        MPI::COMM_WORLD.Barrier();
         duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-        std::cout << (double)duration << std::endl;
+        if (id==0 && j!=0)
+          std::cout << (double)duration << std::endl;
       }
   }
 #endif
