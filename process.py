@@ -146,6 +146,7 @@ n0=results[0][0]
 print "# "+str(mean)+" "+str(std)
 print "# N | slowdown | sigma | t_eff_finish | s_t_eff_finish | ideal_t_eff_finish | t_eff_diff_from_ideal | mean idleness | s_mean_idl | mean effective computing | s_mean_eff_comp"
 
+#for res,res_n in zip(results,results_n):
 for res,res_n in zip(results,results_n):
   print res[0], ((res[1]-mean)/mean)*100, ((res[1]+res[2]-mean)/mean)*100-((res[1]-mean)/mean)*100,res[3]/t0, res[4]/t0, (t0*n0)/(res[0]*t0),res[5], res[6], res[7], res[8]
   

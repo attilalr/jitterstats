@@ -26,15 +26,18 @@ if (len(sys.argv)!=(5+1) and len(sys.argv)!=(6+1) and len(sys.argv)!=(7+1)):
   sys.exit(0)
 
 ops=10000
-it=5000
+it=4000
 source='run.cpp'
 laco=20
+skip_per_proc=400
 
 workt=sys.argv[1]
 mean=sys.argv[2]
 length=sys.argv[3]
 nprocs=sys.argv[4]
 output=sys.argv[-1]
+
+it=it+skip_per_proc*int(nprocs)
 
 # exclude cpu 0 option
 if ('--excl-0' in sys.argv):
@@ -63,22 +66,26 @@ for p in sys.argv:
       print " Error in --set-it-ops parameter."
       sys.exit(0)
 
-def test(source,workt,nprocs,ops,it,name,exclude_cpu_0):
+def test(source,workt,nprocs,ops,it,name,exclude_cpu_0,skip_per_proc):
   #compile first
-  cmd='mpic++ '+source+' -DWORKTYPE='+str(workt)+' -DOPS_PER_ITERATION='+str(ops)+' -DITERATIONS='+str(it)+' '+(lambda x: ' -DARMADILLO=1 -larmadillo' if x==3 else '')(workt)+' -o '+name
+  cmd='mpic++ '+source+' -DWORKTYPE='+str(workt)+' -DOPS_PER_ITERATION='+str(ops)+' -DITERATIONS='+str(it)+' '+(lambda x: ' -DARMADILLO=1 -larmadillo' if x=='3' else '')(workt)+' -o '+name
+  print cmd
   #executing
   os.system(cmd)
   cmd='mpirun -np '+str(nprocs)+' '+(lambda x: '-H localhost -rf rank.lst' if x==1 else '')(exclude_cpu_0)+' '+name
   if (workt==3):
     cmd='export OMP_NUM_THREADS=1 && export OPENBLAS_NUM_THREADS=1 && '+cmd
+  print cmd 
   result=np.array([float (x) for x in os.popen(cmd).read().split() if '#' not in x])
-  os.system('rm '+name)
-  return result.mean()
+  #print os.system('rm '+name)
+  print len(result)
+  return result[(skip_per_proc*int(nprocs)):].mean()
+    
 
 
 if (it_ops_manual==0):
   for i in range(laco):
-    res=test(source,workt,nprocs,ops,it,'teste-run',exclude_cpu_0)
+    res=test(source,workt,nprocs,ops,it,'teste-run',exclude_cpu_0,skip_per_proc)
     print "EL. TIME PER ITERATION: "+str(res)+" s. DESIRED TIME: "+str(float(mean)*0.001)+" s."
     ops=int(float(ops)*0.001*float(mean)/res) # 0.001 is for msec. to sec.
   #  print 'abs('+str(res)+' - '+' '+str(0.001*float(mean))+')'
@@ -102,9 +109,9 @@ print "##########################################"
 print
 
 if (it_ops_manual==0):
-  cmd='export OMP_NUM_THREADS=1 && export OPENBLAS_NUM_THREADS=1 && '+"mpic++ run.cpp "+(lambda x: '-DARMADILLO=1 -larmadillo' if x==3 else '')(workt)+" -DITERATIONS="+str(int(((int(length)*60.0)/(res*int(1)))))+" -DOPS_PER_ITERATION="+str(ops)+" -D WORKTYPE="+str(workt)+" -o outfile && mpirun -np "+str(nprocs)+' '+(lambda x: '-H localhost -rf rank.lst' if x==1 else '')(exclude_cpu_0)+" outfile"
+  cmd='export OMP_NUM_THREADS=1 && export OPENBLAS_NUM_THREADS=1 && '+"mpic++ run.cpp "+(lambda x: '-DARMADILLO=1 -larmadillo' if x=='3' else '')(workt)+" -DITERATIONS="+str(int(((int(length)*60.0)/(res*int(1)))))+" -DOPS_PER_ITERATION="+str(ops)+" -D WORKTYPE="+str(workt)+" -o outfile && mpirun -np "+str(nprocs)+' '+(lambda x: '-H localhost -rf rank.lst' if x==1 else '')(exclude_cpu_0)+" outfile"
 else:
-  cmd='export OMP_NUM_THREADS=1 && export OPENBLAS_NUM_THREADS=1 && '+"mpic++ run.cpp "+(lambda x: '-DARMADILLO=1 -larmadillo' if x==3 else '')(workt)+" -DITERATIONS="+str(it)+" -DOPS_PER_ITERATION="+str(ops)+" -D WORKTYPE="+str(workt)+" -o outfile && mpirun -np "+str(nprocs)+' '+(lambda x: '-H localhost -rf rank.lst' if x==1 else '')(exclude_cpu_0)+" outfile"
+  cmd='export OMP_NUM_THREADS=1 && export OPENBLAS_NUM_THREADS=1 && '+"mpic++ run.cpp "+(lambda x: '-DARMADILLO=1 -larmadillo' if x=='3' else '')(workt)+" -DITERATIONS="+str(it)+" -DOPS_PER_ITERATION="+str(ops)+" -D WORKTYPE="+str(workt)+" -o outfile && mpirun -np "+str(nprocs)+' '+(lambda x: '-H localhost -rf rank.lst' if x==1 else '')(exclude_cpu_0)+" outfile"
 
 print "Running the command: "+cmd
 print
@@ -116,7 +123,8 @@ print
 
 try:
   file=open(output,'w')
-  file.write('#it '+str(it)+' ops: '+str(ops))
+  file.write('#'+os.popen('uname -a').read()+'\n')
+  file.write('#it '+str(it)+' ops: '+str(ops)+'\n')
   file.write(data_ts)
   file.close()
 except:
