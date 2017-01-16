@@ -123,7 +123,7 @@ print
 
 try:
   file=open(output,'w')
-  file.write('#'+os.popen('uname -a').read()+'\n')
+  file.write('#'+os.popen('uname -a').read())
   file.write('#it '+str(it)+' ops: '+str(ops)+'\n')
   file.write(data_ts)
   file.close()

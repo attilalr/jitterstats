@@ -30,7 +30,7 @@ except:
 
 line=file.readline()
 while(line):
-  if line.find("#") == -1:
+  if (line.find("#")==-1 and line!='\n'):
     data_array.append(float(line.split()[0]))
   line=file.readline()
 
@@ -115,7 +115,8 @@ def simulate((am_work,calc_gauss,N,nsamples,datahist,nbins,size_bin,mean,std)):
 
 #creating the entry parameters
 #N_list=[x for x in range(10,100,10)]+[x for x in range(100,1000,100)]+[x for x in range(1000,10000,1000)]
-N_list=[x for x in range(10,400,20)]+[x for x in range(400,20000,100)]
+#N_list=[x for x in range(10,400,20)]+[x for x in range(400,20000,100)]
+N_list=[x for x in range(10,1000,100)]+[x for x in range(1000,20000,1000)]
 
 # acessory list with N+1
 #N_list_next=(np.array(N_list)+1).tolist()
@@ -147,6 +148,6 @@ print "# "+str(mean)+" "+str(std)
 print "# N | slowdown | sigma | t_eff_finish | s_t_eff_finish | ideal_t_eff_finish | t_eff_diff_from_ideal | mean idleness | s_mean_idl | mean effective computing | s_mean_eff_comp"
 
 #for res,res_n in zip(results,results_n):
-for res,res_n in zip(results,results_n):
+for res in results:
   print res[0], ((res[1]-mean)/mean)*100, ((res[1]+res[2]-mean)/mean)*100-((res[1]-mean)/mean)*100,res[3]/t0, res[4]/t0, (t0*n0)/(res[0]*t0),res[5], res[6], res[7], res[8]
   
